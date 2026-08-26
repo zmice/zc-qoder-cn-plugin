@@ -1,0 +1,14 @@
+{
+  "name": "zc-toolkit",
+  "version": "0.1.0",
+  "description": "zc AI 编码工具包 — Quest CN 插件",
+  "author": {
+    "name": "zc"
+  },
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "skills",
+    "coding-toolkit"
+  ]
+}
