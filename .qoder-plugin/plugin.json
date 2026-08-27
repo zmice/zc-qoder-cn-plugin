@@ -1,14 +1,20 @@
 {
   "name": "zc-toolkit",
-  "version": "0.1.0",
-  "description": "zc AI 编码工具包 — Quest CN 插件",
+  "version": "0.10.0",
+  "description": "zc AI 编码工具包 — Qoder CN 插件",
+  "displayName": "zc AI 编码工具包",
   "author": {
-    "name": "zc"
+    "name": "ZMICE"
   },
+  "homepage": "https://github.com/zmice/zc-ai-coding-toolkit",
+  "repository": "https://github.com/zmice/zc-ai-coding-toolkit.git",
   "license": "MIT",
   "keywords": [
     "workflow",
     "skills",
     "coding-toolkit"
-  ]
+  ],
+  "commands": "./commands",
+  "skills": "./skills",
+  "agents": "./agents"
 }
