@@ -21,10 +21,10 @@ description: "SDD+TDD 工作流"
 1. 判断任务是否需要完整交付；简单修复、文档或调查任务不要套完整流程。
 2. 若需求模糊，先进入 `brainstorming-and-design` 或 `spec-driven-development`。
 3. 若规格清楚，进入 `planning-and-task-breakdown`。
-4. 计划确认后，进入 `incremental-implementation` + `test-driven-development`。
+4. 计划可执行且实现已获授权时，进入 `incremental-implementation`；可测试的行为变更配合 `test-driven-development`。
 5. 实现完成后，进入 `code-review-and-quality`。
 6. 准备声明完成前，进入 `verification-before-completion`。
-7. 需要提交时，进入 `git-workflow-and-versioning`，并等待用户确认。
+7. 需要提交时，进入 `git-workflow-and-versioning`；缺少提交授权才询问，已有授权不重复确认。
 8. 周期结束或需要沉淀经验时，进入 `sprint-retrospective`。
 
 ## 阶段门控
@@ -35,10 +35,10 @@ description: "SDD+TDD 工作流"
 | Specify | `spec-driven-development` | 规格可测试，假设已显式列出 |
 | Plan | `planning-and-task-breakdown` | 任务有依赖、文件边界和验证方式 |
 | Plan Review（可选） | `multi-perspective-review` | `GO / REVISE / NO-GO` 结论明确 |
-| Build | `incremental-implementation` + `test-driven-development` | 每个切片实现、测试、回归通过 |
+| Build | `incremental-implementation`，行为变更配合 `test-driven-development` | 切片完成并通过与行为、风险及项目门禁相称的验证；纯文档等非行为切片使用相关 diff、lint 或内容检查 |
 | Review | `code-review-and-quality` | Critical/Important 已处理或有明确延后理由 |
 | Verify | `verification-before-completion` | 新鲜验证命令通过，输出已读 |
-| Commit（可选） | `git-workflow-and-versioning` | 用户确认提交范围和消息 |
+| Commit（可选） | `git-workflow-and-versioning` | 提交在用户授权范围内，内容与消息可审阅 |
 | Retro（可选） | `sprint-retrospective` | 偏差、复盘和行动项已记录 |
 
 ## 构建模式选择
@@ -48,39 +48,16 @@ description: "SDD+TDD 工作流"
 - **Manual**：简单任务、小修复或同一文件内紧耦合改动，主线程直接实现。
 - **Readonly Consult**：复杂任务需要架构、测试、安全、性能、产品、上游吸收、Codex 适配、安装/更新或审查侧评；任务范围明确且 Codex host 可用时，通知后直接启动，不改文件。
 - **Serial Subagent**：已有计划，任务彼此独立但有依赖顺序；使用 `subagent-driven-development` 串行委派。
-- **Context Fan-Out**：任务可以按文件、模块或证据问题并行，且有清晰文件所有权和 fan-in gate；使用 `parallel-agent-dispatch`。低风险写入 fan-out 在计划已接受时可通知式启动，高风险或边界不清时仍必须确认。
+- **Context Fan-Out**：任务可以按文件、模块或证据问题并行，且有清晰文件所有权和 fan-in gate；使用 `parallel-agent-dispatch`。低风险写入在实现已授权、所有权和验证清楚时可通知式启动；高风险缺少对应授权时才确认，边界不清时先收敛或降级串行。
 - **Team Orchestration**：需要 tmux + git worktree 文件系统隔离、长时间多 worker 或 Codex / Qwen 多 CLI 协作；使用 `team-orchestration`，必须用户明确要求或确认。
-- **Context Steward Sidecar**：如果本轮会改变模块结构、验证命令、上下文索引或长期项目约定，派 `agent:context-steward` 维护上下文；主线程继续实现，它在自有边界内 scoped_write，fan-in 时交付写入证据。
+- **Context Steward Sidecar**：长期项目事实确需更新，且写入授权与独立所有权清楚时，考虑派 `agent:context-steward` 维护上下文；普通实现授权不自动扩展为用户配置或跨会话记忆写入。权限遵循共享契约，fan-in 核对 context stewardship report 与写入证据；不满足条件时记录待刷新项并继续主任务。
 
-主线程是 controller / integrator：
+Build 阶段消费计划中的 `agent_opportunity`；计划缺失时先按 `parallel-agent-dispatch` 的 agent opportunity contract 补判，再路由到对应执行 skill。此处只维护生命周期差异：
 
-- 主线程负责目标、计划、分派、文件所有权、stop gate、fan-in 和最终验证。
-- 只读 agent 只汇报结构化结论，不改文件。
-- 写入 agent 只处理被分配的任务和文件，并返回修改文件、验证结果、风险和待 fan-in 项。
-- 写入型 agent 不共享文件所有权；无法划清所有权时降级为 Manual 或 Serial Subagent。
-- 写入型并行的放松适用于当前请求已授权或已接受计划中的低风险切片；涉及生产、敏感数据、破坏性操作、同文件修改或外部副作用时仍走显式确认。worker 数按 runtime capacity 与文件所有权决定，不用固定 2/3 上限代替风险判断。
-- 审查 agent 默认只读；提出 finding 后负责回归确认。
-- context steward 默认 scoped_write；只要写入限制在 `.codex/context/**` 和 `AGENTS.md` managed block，就可以直接维护项目上下文。发生同文件冲突、需要改用户手写规则或越过项目上下文边界时，必须停在 fan-in。
-- 主线程可以处理小任务、集成冲突、最终修补和验证失败分析，但在已经选择多 agent 模式后，不抢占已分配给 worker 的任务。
-
-进入任一多 agent 模式前，必须有 bounded loop contract：
-
-- `loop_budget`：每个 task、worker、review finding 或验证失败最多几轮。
-- `stop condition`：同类失败重复、两轮无法关闭同一 finding、同文件冲突、agent 状态不明或验证方式缺失时停止。
-- `degraded path`：只读 agent 不可用时主线程复核；写入 worker 失败时缩小任务或改串行；`zc team` 不满足启动条件时回到 Context Fan-Out 或 Manual。
-- `fan-in evidence`：所有 agent 状态、修改文件、验证结果、finding fingerprint、回归结论、context stewardship 报告和最终验证命令。
-
-推荐提示格式：
-
-```text
-Recommendation: 按 Manual / Readonly Consult / Serial Subagent / Context Fan-Out / Team 模式推进 because <证据与 trade-off>。
-- agent_opportunity:
-- 只读协助:
-- 写入边界:
-- fan-in 验证:
-- loop_budget:
-- 是否需要确认:
-```
+- 主线程负责目标、stop gate、fan-in 和最终验证，不抢占已分配任务。
+- Manual 直接实现；Serial 按依赖顺序；Fan-Out 按互斥所有权执行；Team 仅在显式确认后进入。
+- 执行模式不可用或边界失效时，按计划的 degraded path 缩小范围或降级串行。
+- Review 和 Verify 继续消费 fan-in evidence；并行完成不能跳过集成验证。
 
 ## 审查与回归闭环
 
@@ -109,6 +86,9 @@ controller owns fan-in
 ## 阶段切换纪律
 
 - 进入新阶段前，说明当前阶段已满足的证据。
+- 阶段门控检查证据，不默认要求人工逐阶段批准；已授权工作持续到完成相关验证、修复引入的失败和交付结果。
+- 用户只要求研究、方案或评审时，在该范围完成；不得自行扩大为实现或发布。
+- skill 指导与用户明确要求冲突时遵循用户要求。若某条指导确实要求暂停，指出具体文件、条款和缺失决策；不要把例行步骤解释为新授权门槛。
 - 阶段中发现前提失真时，回退到上游阶段，不继续堆实现。
 - 长会话变慢或内容开始混乱时，切到 `context-budget-audit` / `context-engineering`。
 - 变更涉及浏览器体验时，在单元/API 测试之外补 `browser-qa-testing`。
@@ -119,7 +99,7 @@ controller owns fan-in
 立即停止当前阶段并重新定位：
 
 - 测试、构建或 lint 失败但原因未读清。
-- 用户纠正了需求、范围或安全边界。
+- 用户纠正使当前步骤与最新需求或安全边界冲突时，停止受影响步骤，保留仍有效的成果，调整计划后继续授权范围内的工作；普通补充要求或状态询问不重启整条流程。
 - 计划要求修改的文件和实际代码结构明显不一致。
 - 出现破坏性操作、凭据、生产数据或不可逆迁移风险。
 - 需要并行但没有文件所有权、隔离策略和 fan-in 验证。
@@ -133,7 +113,7 @@ controller owns fan-in
 Recommendation: <下一步动作> because <具体证据、取舍和被放弃的替代方案>。
 ```
 
-不要只说“更稳”“更好”“建议继续”。必须说明为什么这个动作优于至少一个替代方案，以及如何验证它成立。
+有真实方案取舍时说明原因和验证方式；例行阶段推进只需说明结果与下一步，不为填格式虚构替代方案。
 
 ## 验证
 

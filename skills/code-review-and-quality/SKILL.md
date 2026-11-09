@@ -20,17 +20,26 @@ description: "代码审查与质量"
 
 ## 执行步骤
 
-1. 先理解变更意图，再看测试和验证证据
-2. 按五个维度审查：
+首次采集补丁前就关闭 Git 外部 diff 与 textconv，避免执行仓库配置的转换程序或把转换结果当作原始变更。所有用于审查或哈希的 `diff` / `show` 补丁命令都带 `--no-ext-diff --no-textconv`；不要先运行普通 diff 试探再补安全版本。工作树示例：
+
+```sh
+git --no-pager diff --no-ext-diff --no-textconv --no-color HEAD -- <path>
+```
+
+提交或范围审查替换为对应 refs；untracked 文件直接读取。完整身份、截断和回执要求见 `references/review-coverage-contract.md`。
+
+1. 固定本轮 diff identity，枚举完整 changed-file manifest；逐文件留下 `reviewed`、`skipped(reason)` 或 `failed` 回执。未知或未审范围阻断 Approve。
+2. 先理解变更意图，再看测试和验证证据
+3. 按五个维度审查：
    - 正确性
    - 可读性
    - 架构
    - 安全性
    - 性能
-3. 把发现按 `Critical / Important / Suggestion` 分级
-4. 对每条问题给出具体位置和修复方向
-5. 审查结论给出后，要求作者进入 review 响应闭环，逐条收敛问题
-6. 所有 Critical 清零并完成必要回归验证后，才算通过
+4. 把发现按 `Critical / Important / Suggestion` 分级
+5. 对每条 finding 给出位置、触发条件、影响、代码证据、已检查的反例或 guard，以及修复和复验方向；不能证实的内容标为假设，不作为 finding。
+6. 审查结论给出后，要求作者进入 review 响应闭环，逐条收敛问题
+7. 所有 Critical 清零、未审范围已处理且完成必要回归验证后，才算通过
 
 ## 成功标准
 
@@ -39,6 +48,7 @@ description: "代码审查与质量"
 - 报告能让作者快速定位问题和采取动作
 - 评审没有用“看起来还行”替代事实判断
 - 审查后的问题处理路径清楚，不把“提了意见”误当成“问题已关闭”
+- review identity、完整文件清单和逐文件回执可复核；零 finding 不代表完整审查
 
 ## 推荐结论格式
 
@@ -60,11 +70,11 @@ Recommendation: <Approve / Request changes / Defer> because <evidence, risk, and
 
 以下问题即使 diff 不大，也要作为架构或可维护性风险审查：
 
-- 重复的条件判断、模式匹配或 switch 分支不断出现，通常说明缺少领域模型、策略表、dispatcher 或数据驱动映射。
+- 多个独立调用点重复同一项稳定决策时，先判断删除、复用或局部数据映射能否解决；只有这些方式不能降低复杂度，才把它视为缺少领域模型、策略表或 dispatcher 的证据。
 - shared / common 模块里出现 feature-specific 分支，通常说明边界泄漏；优先建议把专属逻辑下沉到调用方、adapter 或策略实现。
 - 重构只是把复杂度从一个文件搬到另一个文件，没有减少状态、分支、耦合或重复时，不应算质量改善。
 - 文件已经过大、职责混杂或新增逻辑需要读很远的上下文才能判断正确时，即使本次新增行数少，也要指出后续维护风险。
-- finding 不能只说“建议抽象一下”；必须给出结构性 remedy，例如引入明确模型、拆 dispatcher、移动边界、删除重复路径或缩小公共 API。
+- finding 不能只说“建议抽象一下”；remedy 按删除、复用仓库能力、使用标准库或平台原生能力、内联无效抽象、移动边界、缩小公共 API 的顺序评估，只有当前消费者和稳定边界提供证据时才新增模型或 dispatcher。
 
 ## 与其他技能的衔接
 
@@ -94,6 +104,8 @@ Recommendation: <Approve / Request changes / Defer> because <evidence, risk, and
 - [ ] Follows existing patterns
 - [ ] No unnecessary coupling or dependencies
 - [ ] Appropriate abstraction level
+- [ ] New dependencies, configuration, and abstractions are supported by a current requirement or real boundary
+- [ ] Does not reimplement an existing repository, standard-library, or platform capability
 
 ### Security
 - [ ] No secrets in code
@@ -121,6 +133,7 @@ Recommendation: <Approve / Request changes / Defer> because <evidence, risk, and
 
 - 更详细的安全审查指导，请见 `references/security-checklist.md`
 - 更详细的性能审查检查项，请见 `references/performance-checklist.md`
+- 覆盖回执、阻断条件和 finding 证伪格式见 `references/review-coverage-contract.md`
 - 上述上游清单的许可证声明随产物分发于 `references/LICENSE-agent-skills.txt`
 
 ## 常见合理化说辞
@@ -154,3 +167,4 @@ Recommendation: <Approve / Request changes / Defer> because <evidence, risk, and
 - [ ] 测试通过
 - [ ] 构建成功
 - [ ] 已记录验证故事（改了什么、如何验证）
+- [ ] diff identity、changed-file manifest 与 `reviewed / skipped(reason) / failed` 回执完整；没有未知或未审范围

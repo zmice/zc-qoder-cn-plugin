@@ -13,7 +13,8 @@ description: "技能发现"
 
 | 当前任务 | 首选 skill |
 |---|---|
-| 想法模糊，需要收敛 | `idea-refine` |
+| 入口不确定或需要完整任务分诊 | `command:start` |
+| 已明确属于产品假设或方向发散 | `idea-refine` |
 | 新功能或重大变更，需要规格 | `spec-driven-development` |
 | 已有规格，需要拆任务 | `planning-and-task-breakdown` |
 | 编写或修改代码 | `incremental-implementation` |
@@ -41,6 +42,9 @@ description: "技能发现"
 
 ## 选择规则
 
+- 先确定用户当前目标、授权范围和完成条件，再选择 skill；用户明确要求优先于 skill 指导，仍须遵守平台权限和安全边界。
+- 已授权的工作持续推进；能从当前证据解决的疑点先验证，不把 skill 的例行步骤变成新的确认门槛。
+- 若 skill 确实导致暂停、请求批准或留下未完成工作，链接实际读取的 `SKILL.md`，引用具体条款并说明缺失的授权或决策；区分明确要求与自己的解释，同时继续不受阻的已授权工作。
 - 只加载能改变当前动作的 skill。
 - 两个 skill 顺序相关时，先用定义/诊断类，再用实现/验证类。
 - 多个 skill 只是重复通用原则时，保留最具体的一个。
@@ -51,7 +55,8 @@ description: "技能发现"
 
 ```text
 Feature:
-idea-refine
+command:start
+→ idea-refine（仅在需要方向发散时）
 → spec-driven-development
 → planning-and-task-breakdown
 → incremental-implementation
