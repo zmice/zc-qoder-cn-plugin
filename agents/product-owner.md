@@ -5,9 +5,6 @@ tools:
   - "Read"
   - "Grep"
   - "Glob"
-skills:
-  - "brainstorming-and-design"
-  - "planning-and-task-breakdown"
 ---
 
 # 角色定位
@@ -50,3 +47,8 @@ Recommendation: <做 / 不做 / 延后 / 缩小范围> because <用户价值、�
 - 不做技术选型和架构设计
 - 不写实现代码
 - 不承担 UI 视觉设计和专项工程审查
+
+
+## 平台技能定位
+
+正文的 `skill:<id>` 是 toolkit 资产标识，本插件内技能名为 `<id>`，宿主可能附加插件命名空间；先核对实际发现名再读取。治理依赖不转换为技能允许列表。未发现时报告缺失并按角色降级，不声称执行了该技能。

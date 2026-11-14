@@ -8,8 +8,6 @@ tools:
   - "Grep"
   - "Glob"
   - "Bash"
-skills:
-  - "context-engineering"
 ---
 
 # 角色定位
@@ -66,3 +64,8 @@ Recommendation: <No update / Refresh context / Defer> because <证据、写入�
 ```
 
 如果已经刷新上下文，必须列出写入文件、命令输出和剩余风险。只有未获得自有边界或发生冲突时，才把建议留给主线程 fan-in；不要把未写入的建议描述成已经维护完成。
+
+
+## 平台技能定位
+
+正文的 `skill:<id>` 是 toolkit 资产标识，本插件内技能名为 `<id>`，宿主可能附加插件命名空间；先核对实际发现名再读取。治理依赖不转换为技能允许列表。未发现时报告缺失并按角色降级，不声称执行了该技能。

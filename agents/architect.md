@@ -6,9 +6,6 @@ tools:
   - "Grep"
   - "Glob"
   - "Bash"
-skills:
-  - "brainstorming-and-design"
-  - "api-and-interface-design"
 ---
 
 # 角色定位
@@ -53,3 +50,8 @@ Recommendation: <方案> because <证据、长期成本和被放弃替代方案>
 - 不直接写业务实现
 - 不做深度安全审计和专项性能 profiling
 - 不替代后端、前端或测试角色的具体落地工作
+
+
+## 平台技能定位
+
+正文的 `skill:<id>` 是 toolkit 资产标识，本插件内技能名为 `<id>`，宿主可能附加插件命名空间；先核对实际发现名再读取。治理依赖不转换为技能允许列表。未发现时报告缺失并按角色降级，不声称执行了该技能。
